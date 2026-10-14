@@ -1,0 +1,23 @@
+@startuml colaboracion_proceso_pedido
+title Diagrama de colaboración — Proceso "Realizar pedido y generar orden de producción"
+skinparam object {
+  BackgroundColor #F2E6D8
+  BorderColor #6B3F1D
+  ArrowColor #6B3F1D
+}
+
+object "cliente : Cliente" as cliente
+object "tienda : ModuloTienda" as tienda
+object "pedido : Pedido" as pedido
+object "pasarela : Pago" as pago
+object "orden : OrdenProduccion" as orden
+object "notificador : NotificacionEnviada" as notif
+
+cliente -right-> tienda : "1: realizarPedido(carrito)"
+tienda -right-> pedido : "2: crear(detalle)"
+pedido -down-> pago : "3: procesar(monto)"
+pago -up-> pedido : "4: confirmarPago()"
+pedido -right-> orden : "5: generarOrdenProduccion(detalle)"
+orden -down-> notif : "6: notificar(\"pedido confirmado\")"
+notif -left-> cliente : "7: enviarViaN8n()"
+@enduml

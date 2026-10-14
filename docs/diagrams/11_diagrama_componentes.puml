@@ -1,0 +1,54 @@
+@startuml diagrama_componentes
+allowmixing
+title Diagrama de componentes — Plataforma RMHD Ideas
+skinparam component {
+  BackgroundColor #F2E6D8
+  BorderColor #6B3F1D
+  ArrowColor #6B3F1D
+}
+skinparam database {
+  BackgroundColor #F2E6D8
+  BorderColor #6B3F1D
+}
+
+package "Frontend" {
+  component "Tienda en línea (Next.js 14)" as Frontend
+}
+
+package "Backend (FastAPI)" {
+  component "API de Catálogo" as ApiCatalogo
+  component "API de Pedidos" as ApiPedidos
+  component "API de Producción" as ApiProduccion
+  component "Módulo de Recomendación IA" as ModRecom
+  component "Módulo de Predicción de Demanda" as ModPrediccion
+  component "API de Autenticación" as ApiAuth
+}
+
+database "PostgreSQL" as DB
+
+component "n8n (automatización de flujos)" as N8n
+component "Pasarela de pago (Wompi / PSE)" as Wompi
+component "WhatsApp Business API (Meta)" as WhatsApp
+component "Servicio de correo (SMTP)" as Correo
+
+Frontend --> ApiCatalogo : HTTPS/REST
+Frontend --> ApiPedidos : HTTPS/REST
+Frontend --> ApiProduccion : HTTPS/REST
+Frontend --> ApiAuth : HTTPS/REST
+
+ApiCatalogo --> DB
+ApiPedidos --> DB
+ApiProduccion --> DB
+ApiAuth --> DB
+ModRecom --> DB
+ModPrediccion --> DB
+
+ApiPedidos --> Wompi : procesar pago
+ApiPedidos ..> ModRecom : consultar recomendaciones
+Frontend ..> ModRecom : mostrar "recomendados para ti"
+
+ApiProduccion --> N8n : eventos de cambio de estado / alertas
+ModPrediccion --> N8n : alertas proactivas de producción
+N8n --> WhatsApp : notificaciones cliente/artesana
+N8n --> Correo : notificaciones cliente/artesana
+@enduml

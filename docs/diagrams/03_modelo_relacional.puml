@@ -1,0 +1,191 @@
+@startuml modelo_relacional
+hide circle
+skinparam linetype ortho
+skinparam roundcorner 6
+skinparam class {
+  BackgroundColor<<tabla>> #F2E6D8
+  BorderColor #6B3F1D
+  ArrowColor #6B3F1D
+}
+
+entity "usuario" as usuario <<tabla>> {
+  * id_usuario : SERIAL <<PK>>
+  --
+  * nombre : VARCHAR(120)
+  * email : VARCHAR(160) <<UNIQUE>>
+  * password_hash : VARCHAR(255)
+  * rol : VARCHAR(20)  ' 'artesana' | 'cliente'
+  telefono : VARCHAR(20)
+  fecha_registro : TIMESTAMP
+}
+
+entity "categoria_producto" as categoria <<tabla>> {
+  * id_categoria : SERIAL <<PK>>
+  --
+  * nombre : VARCHAR(80)
+  tiempo_estimado_min_dias : INTEGER
+  tiempo_estimado_max_dias : INTEGER
+}
+
+entity "producto" as producto <<tabla>> {
+  * id_producto : SERIAL <<PK>>
+  --
+  * id_categoria : INTEGER <<FK>>
+  * nombre : VARCHAR(150)
+  descripcion : TEXT
+  * precio : NUMERIC(12,2)
+  disponibilidad : VARCHAR(20) ' 'bajo_pedido' | 'stock_limitado'
+  destacado : BOOLEAN
+  no_recomendar : BOOLEAN
+  imagen_url : VARCHAR(255)
+  activo : BOOLEAN
+}
+
+entity "material" as material <<tabla>> {
+  * id_material : SERIAL <<PK>>
+  --
+  * nombre : VARCHAR(100)
+  unidad_medida : VARCHAR(20)
+  stock_actual : NUMERIC(12,2)
+}
+
+entity "producto_material" as prodmat <<tabla>> {
+  * id_producto : INTEGER <<FK>>
+  * id_material : INTEGER <<FK>>
+  --
+  cantidad_requerida : NUMERIC(12,2)
+}
+
+entity "capacidad_produccion" as capacidad <<tabla>> {
+  * id_capacidad : SERIAL <<PK>>
+  --
+  max_ordenes_simultaneas : INTEGER
+  max_ordenes_semana : INTEGER
+  vigente_desde : DATE
+}
+
+entity "pedido" as pedido <<tabla>> {
+  * id_pedido : SERIAL <<PK>>
+  --
+  * id_cliente : INTEGER <<FK>>
+  * fecha_pedido : TIMESTAMP
+  * tipo_pedido : VARCHAR(20) ' 'stock' | 'pre_orden'
+  * estado_pago : VARCHAR(20) ' 'pendiente'|'pagado'|'cancelado'
+  total : NUMERIC(12,2)
+}
+
+entity "detalle_pedido" as detalle <<tabla>> {
+  * id_detalle_pedido : SERIAL <<PK>>
+  --
+  * id_pedido : INTEGER <<FK>>
+  * id_producto : INTEGER <<FK>>
+  * cantidad : INTEGER
+  * precio_unitario : NUMERIC(12,2)
+}
+
+entity "pago" as pago <<tabla>> {
+  * id_pago : SERIAL <<PK>>
+  --
+  * id_pedido : INTEGER <<FK>>
+  pasarela : VARCHAR(30) ' 'wompi' | 'pse'
+  referencia_transaccion : VARCHAR(100)
+  * estado : VARCHAR(20)
+  monto : NUMERIC(12,2)
+  fecha_pago : TIMESTAMP
+}
+
+entity "orden_produccion" as orden <<tabla>> {
+  * id_orden_produccion : SERIAL <<PK>>
+  --
+  * id_detalle_pedido : INTEGER <<FK>>
+  * estado : VARCHAR(20) ' en_cola|en_proceso|en_acabados|terminado|entregado
+  * fecha_inicio : TIMESTAMP
+  * fecha_estimada_entrega : DATE
+  fecha_real_entrega : DATE
+  prioridad_manual : INTEGER
+  notas : TEXT
+}
+
+entity "historial_estado_orden" as historial <<tabla>> {
+  * id_historial : SERIAL <<PK>>
+  --
+  * id_orden_produccion : INTEGER <<FK>>
+  * id_usuario : INTEGER <<FK>>
+  estado_anterior : VARCHAR(20)
+  * estado_nuevo : VARCHAR(20)
+  * fecha_cambio : TIMESTAMP
+}
+
+entity "consumo_material_orden" as consumo <<tabla>> {
+  * id_orden_produccion : INTEGER <<FK>>
+  * id_material : INTEGER <<FK>>
+  --
+  cantidad_consumida : NUMERIC(12,2)
+}
+
+entity "interaccion_cliente" as interaccion <<tabla>> {
+  * id_interaccion : SERIAL <<PK>>
+  --
+  * id_cliente : INTEGER <<FK>>
+  * id_producto : INTEGER <<FK>>
+  * tipo_interaccion : VARCHAR(20) ' vista|carrito|compra
+  * fecha : TIMESTAMP
+}
+
+entity "prediccion_demanda" as prediccion <<tabla>> {
+  * id_prediccion : SERIAL <<PK>>
+  --
+  * id_categoria : INTEGER <<FK>>
+  * fecha_generacion : TIMESTAMP
+  * fecha_proyeccion : DATE
+  valor_proyectado : NUMERIC(12,2)
+}
+
+entity "alerta_produccion" as alerta <<tabla>> {
+  * id_alerta : SERIAL <<PK>>
+  --
+  * id_prediccion : INTEGER <<FK>>
+  * fecha_alerta : TIMESTAMP
+  mensaje : TEXT
+  enviada : BOOLEAN
+}
+
+entity "plantilla_mensaje" as plantilla <<tabla>> {
+  * id_plantilla : SERIAL <<PK>>
+  --
+  * nombre : VARCHAR(100)
+  * canal : VARCHAR(20) ' email|whatsapp
+  contenido : TEXT
+}
+
+entity "notificacion_enviada" as notificacion <<tabla>> {
+  * id_notificacion : SERIAL <<PK>>
+  --
+  id_orden_produccion : INTEGER <<FK>>
+  id_pedido : INTEGER <<FK>>
+  * id_plantilla : INTEGER <<FK>>
+  * canal : VARCHAR(20)
+  * estado_envio : VARCHAR(20) ' pendiente|enviada|fallida
+  fecha_envio : TIMESTAMP
+}
+
+usuario ||--o{ pedido : "realiza (cliente)"
+usuario ||--o{ historial : "registra cambio"
+categoria ||--o{ producto : "clasifica"
+producto ||--o{ prodmat : "requiere"
+material ||--o{ prodmat : "es usado en"
+producto ||--o{ detalle : "incluido en"
+pedido ||--o{ detalle : "contiene"
+pedido ||--o{ pago : "se paga con"
+detalle ||--|| orden : "genera"
+orden ||--o{ historial : "tiene"
+orden ||--o{ consumo : "consume"
+material ||--o{ consumo : "consumido en"
+usuario ||--o{ interaccion : "genera (cliente)"
+producto ||--o{ interaccion : "es objeto de"
+categoria ||--o{ prediccion : "se proyecta para"
+prediccion ||--o{ alerta : "dispara"
+plantilla ||--o{ notificacion : "se usa en"
+orden ||--o{ notificacion : "origina"
+pedido ||--o{ notificacion : "origina"
+@enduml

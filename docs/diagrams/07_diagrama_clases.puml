@@ -1,0 +1,164 @@
+@startuml diagrama_clases
+skinparam class {
+  BackgroundColor #F2E6D8
+  BorderColor #6B3F1D
+  ArrowColor #6B3F1D
+  AttributeFontSize 11
+}
+hide empty members
+
+abstract class Usuario {
+  - idUsuario: int
+  - nombre: string
+  - email: string
+  - passwordHash: string
+  + autenticar(password: string): boolean
+}
+
+class Artesana extends Usuario {
+  + gestionarCatalogo()
+  + configurarTiempoProduccion(categoria: CategoriaProducto)
+  + actualizarEstadoOrden(orden: OrdenProduccion, nuevoEstado: string)
+  + priorizarOrden(orden: OrdenProduccion, posicion: int)
+  + configurarCapacidadProduccion(max: int)
+  + visualizarMetricas(rango: Periodo): Metricas
+}
+
+class Cliente extends Usuario {
+  + navegarCatalogo(filtro: Filtro): List~Producto~
+  + realizarPedido(carrito: Carrito): Pedido
+  + consultarEstadoPedido(idPedido: int): Pedido
+}
+
+class CategoriaProducto {
+  - idCategoria: int
+  - nombre: string
+  - tiempoEstimadoMinDias: int
+  - tiempoEstimadoMaxDias: int
+}
+
+class Producto {
+  - idProducto: int
+  - nombre: string
+  - descripcion: string
+  - precio: decimal
+  - disponibilidad: string
+  - destacado: boolean
+  - noRecomendar: boolean
+  + calcularFechaEstimada(colaActual: int): Date
+}
+
+class Material {
+  - idMaterial: int
+  - nombre: string
+  - unidadMedida: string
+  - stockActual: decimal
+}
+
+class CapacidadProduccion {
+  - maxOrdenesSimultaneas: int
+  - maxOrdenesSemana: int
+  + superaCapacidad(ordenesEnCola: int): boolean
+}
+
+class Pedido {
+  - idPedido: int
+  - fechaPedido: datetime
+  - tipoPedido: string
+  - estadoPago: string
+  - total: decimal
+  + confirmar()
+  + calcularTotal(): decimal
+}
+
+class DetallePedido {
+  - idDetallePedido: int
+  - cantidad: int
+  - precioUnitario: decimal
+}
+
+class Pago {
+  - idPago: int
+  - pasarela: string
+  - referenciaTransaccion: string
+  - estado: string
+  - monto: decimal
+  + procesar(): boolean
+}
+
+class OrdenProduccion {
+  - idOrdenProduccion: int
+  - estado: string
+  - fechaInicio: datetime
+  - fechaEstimadaEntrega: date
+  - fechaRealEntrega: date
+  - prioridadManual: int
+  + cambiarEstado(nuevoEstado: string, usuario: Usuario)
+  + calcularTiempoReal(): int
+}
+
+class HistorialEstadoOrden {
+  - estadoAnterior: string
+  - estadoNuevo: string
+  - fechaCambio: datetime
+}
+
+class InteraccionCliente {
+  - tipoInteraccion: string
+  - fecha: datetime
+}
+
+class MotorRecomendacion {
+  + generarRecomendaciones(cliente: Cliente): List~Producto~
+  + filtradoBasadoContenido(cliente: Cliente): List~Producto~
+}
+
+class PrediccionDemanda {
+  - fechaGeneracion: datetime
+  - fechaProyeccion: date
+  - valorProyectado: decimal
+  + entrenarModelo(historico: List~Pedido~)
+}
+
+class AlertaProduccion {
+  - fechaAlerta: datetime
+  - mensaje: string
+  - enviada: boolean
+  + generarDesdePrediccion(prediccion: PrediccionDemanda)
+}
+
+class PlantillaMensaje {
+  - nombre: string
+  - canal: string
+  - contenido: string
+  + renderizar(datos: map): string
+}
+
+class NotificacionEnviada {
+  - canal: string
+  - estadoEnvio: string
+  - fechaEnvio: datetime
+  + enviarViaN8n()
+}
+
+Artesana "1" -- "0..*" Producto : gestiona >
+Artesana "1" -- "0..*" OrdenProduccion : administra >
+Artesana "1" -- "1" CapacidadProduccion : configura >
+Cliente "1" -- "0..*" Pedido : realiza >
+Cliente "1" -- "0..*" InteraccionCliente : genera >
+CategoriaProducto "1" -- "0..*" Producto : clasifica >
+Producto "0..*" -- "0..*" Material : requiere >
+Pedido "1" *-- "1..*" DetallePedido : contiene
+Pedido "1" -- "0..*" Pago : se paga con >
+DetallePedido "1" -- "1" Producto : referencia >
+DetallePedido "1" -- "1" OrdenProduccion : genera >
+OrdenProduccion "1" *-- "0..*" HistorialEstadoOrden : registra
+OrdenProduccion "0..*" -- "0..*" NotificacionEnviada : origina >
+Pedido "0..*" -- "0..*" NotificacionEnviada : origina >
+InteraccionCliente "0..*" -- "1" Producto : sobre >
+MotorRecomendacion ..> Producto : recomienda >
+MotorRecomendacion ..> InteraccionCliente : analiza >
+PrediccionDemanda "1" -- "1" CategoriaProducto : proyecta >
+PrediccionDemanda "1" -- "0..1" AlertaProduccion : dispara >
+PlantillaMensaje "1" -- "0..*" NotificacionEnviada : usa >
+@enduml

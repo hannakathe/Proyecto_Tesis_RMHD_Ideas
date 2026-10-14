@@ -1,0 +1,22 @@
+@startuml colaboracion_proceso_alerta_demanda
+title Diagrama de colaboración — Proceso "Generar alerta proactiva de producción desde la predicción de demanda"
+skinparam object {
+  BackgroundColor #F2E6D8
+  BorderColor #6B3F1D
+  ArrowColor #6B3F1D
+}
+
+object "scheduler : n8n" as scheduler
+object "modelo : PrediccionDemanda" as modelo
+object "historico : Pedido[]" as historico
+object "alerta : AlertaProduccion" as alerta
+object "notificador : NotificacionEnviada" as notif
+object "artesana : Artesana" as artesana
+
+scheduler -right-> modelo : "1: entrenarModelo(historico)"
+modelo -down-> historico : "2: leer(datosHistoricos)"
+modelo -up-> modelo : "3: generarProyeccion(30 días)"
+modelo -right-> alerta : "4: generarDesdePrediccion()\n[si proyeccion > umbral]"
+alerta -down-> notif : "5: notificar(mensaje)"
+notif -left-> artesana : "6: enviarViaN8n()"
+@enduml

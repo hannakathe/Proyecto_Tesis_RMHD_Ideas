@@ -1,0 +1,21 @@
+@startuml estados_pedido
+title Diagrama de estados — Pedido (RF-14, RF-16, RF-27)
+skinparam state {
+  BackgroundColor #F2E6D8
+  BorderColor #6B3F1D
+  ArrowColor #6B3F1D
+}
+
+[*] --> Creado : cliente arma el carrito
+
+Creado --> PendientePago : cliente confirma\npedido / pre-orden (RF-14)
+
+PendientePago --> Pagado : pasarela confirma pago (RF-27)
+PendientePago --> Cancelado : tiempo de espera agotado\no cliente cancela
+
+Pagado --> [*] : se genera orden de\nproducción (RF-16)
+Cancelado --> [*]
+
+Pagado : entry / enviar confirmación de pedido (RF-16)
+Cancelado : entry / liberar cupo en cola de producción
+@enduml

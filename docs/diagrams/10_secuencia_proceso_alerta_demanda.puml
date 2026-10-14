@@ -1,0 +1,36 @@
+@startuml secuencia_proceso_alerta_demanda
+title Diagrama de secuencia — Proceso "Generar alerta proactiva de producción" (RF-09, RF-22, RF-23)
+skinparam sequence {
+  ActorBorderColor #6B3F1D
+  LifeLineBorderColor #6B3F1D
+  ParticipantBorderColor #6B3F1D
+  ParticipantBackgroundColor #F2E6D8
+  ArrowColor #6B3F1D
+}
+
+participant "n8n\n(scheduler semanal)" as N8n
+participant "Servicio de\nPredicción (Prophet)" as Prophet
+participant "Base de datos" as BD
+participant "API Alertas" as API
+actor "Artesana" as Artesana
+
+N8n -> Prophet : ejecutar entrenamiento semanal
+Prophet -> BD : SELECT historico_pedidos (por categoría)
+BD --> Prophet : datos históricos
+Prophet -> Prophet : entrenar modelo y proyectar 30 días
+Prophet -> BD : INSERT prediccion_demanda
+
+alt proyección > umbral definido
+  Prophet -> API : solicitar generación de alerta
+  API -> BD : INSERT alerta_produccion
+  API -> N8n : disparar notificación "alerta de producción"
+  N8n -> Artesana : enviar alerta (correo/WhatsApp) con ≥5 días de anticipación
+else proyección dentro de rango normal
+  Prophet -> BD : actualizar panel de visualización (sin alerta)
+end
+
+Artesana -> API : GET /predicciones (panel de visualización)
+API -> BD : SELECT prediccion_demanda
+BD --> API : proyecciones
+API --> Artesana : gráfica demanda proyectada vs. histórica
+@enduml

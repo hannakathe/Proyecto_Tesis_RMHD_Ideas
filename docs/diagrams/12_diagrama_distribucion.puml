@@ -1,0 +1,52 @@
+@startuml diagrama_distribucion
+title Diagrama de distribución (despliegue) — Plataforma RMHD Ideas
+skinparam node {
+  BackgroundColor #F2E6D8
+  BorderColor #6B3F1D
+  ArrowColor #6B3F1D
+}
+
+node "Dispositivo del cliente\n(navegador / móvil)" as DispCliente {
+  artifact "SPA Next.js\n(renderizado)" as SPA
+}
+
+node "Dispositivo de la artesana\n(navegador / móvil)" as DispArtesana {
+  artifact "Panel administrativo\n(Next.js)" as Panel
+}
+
+cloud "Railway.app" {
+  node "Contenedor Frontend" as NodoFrontend {
+    artifact "Next.js 14" as AppFrontend
+  }
+  node "Contenedor Backend" as NodoBackend {
+    artifact "FastAPI\n(API + módulos IA)" as AppBackend
+  }
+  database "PostgreSQL\n(instancia administrada)" as DBNode
+}
+
+cloud "n8n Cloud" as N8nCloud {
+  artifact "Flujos de automatización" as FlujosN8n
+}
+
+cloud "Wompi / PSE" as WompiCloud {
+  artifact "Pasarela de pago" as AppWompi
+}
+
+cloud "Meta WhatsApp\nBusiness API" as MetaCloud {
+  artifact "Canal WhatsApp" as AppWhatsApp
+}
+
+cloud "Proveedor de\nIA (embeddings/LLM)" as IACloud {
+  artifact "API de recomendación\n/ generación" as AppIA
+}
+
+DispCliente -down-> NodoFrontend : HTTPS
+DispArtesana -down-> NodoFrontend : HTTPS
+NodoFrontend -right-> NodoBackend : HTTPS/REST (interno Railway)
+NodoBackend -down-> DBNode : TCP/5432 (TLS)
+NodoBackend -right-> N8nCloud : Webhooks HTTPS
+NodoBackend -right-> WompiCloud : HTTPS/REST
+NodoBackend -right-> IACloud : HTTPS/REST
+N8nCloud -down-> MetaCloud : HTTPS/REST
+N8nCloud -down-> DispCliente : Notificación (correo/WhatsApp)
+@enduml

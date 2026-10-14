@@ -1,0 +1,62 @@
+@startuml casos_uso_alto_nivel
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam usecase {
+  BackgroundColor #F2E6D8
+  BorderColor #6B3F1D
+  ArrowColor #6B3F1D
+}
+
+actor "Artesana\nadministradora" as Artesana
+actor Cliente
+actor "Pasarela de pago\n(Wompi/PSE)" as Pasarela
+actor "Plataforma de\nautomatización (n8n)" as N8n
+actor "Motor de IA\n(recomendación y predicción)" as IA
+
+rectangle "Plataforma RMHD Ideas" {
+  usecase "UC-01 Gestionar catálogo\nde productos" as UC01
+  usecase "UC-02 Configurar tiempos\nde producción" as UC02
+  usecase "UC-03 Navegar y filtrar\ncatálogo" as UC03
+  usecase "UC-04 Realizar pedido\n/ pre-orden" as UC04
+  usecase "UC-05 Procesar pago" as UC05
+  usecase "UC-06 Gestionar orden\nde producción (kanban)" as UC06
+  usecase "UC-07 Consultar panel de\ncarga de producción" as UC07
+  usecase "UC-08 Priorizar cola\nde producción" as UC08
+  usecase "UC-09 Recibir notificaciones\nautomáticas" as UC09
+  usecase "UC-10 Configurar plantillas\nde mensajes" as UC10
+  usecase "UC-11 Ver recomendaciones\npersonalizadas" as UC11
+  usecase "UC-12 Gestionar destacados /\nocultos de recomendación" as UC12
+  usecase "UC-13 Generar predicción\nde demanda" as UC13
+  usecase "UC-14 Recibir alerta proactiva\nde producción" as UC14
+  usecase "UC-15 Visualizar métricas\nde operación" as UC15
+  usecase "UC-16 Autenticarse en\nla plataforma" as UC16
+}
+
+Artesana --> UC01
+Artesana --> UC02
+Artesana --> UC06
+Artesana --> UC07
+Artesana --> UC08
+Artesana --> UC10
+Artesana --> UC12
+Artesana --> UC14
+Artesana --> UC15
+Artesana --> UC16
+
+Cliente --> UC03
+Cliente --> UC04
+Cliente --> UC09
+Cliente --> UC11
+Cliente --> UC16
+
+UC04 --> UC05 : <<include>>
+UC05 --> Pasarela
+UC04 ..> UC06 : <<extend>>\n(crea orden)
+UC06 --> UC09 : <<include>>
+UC09 --> N8n
+UC13 --> UC14 : <<extend>>
+UC13 --> IA
+UC11 --> IA
+UC14 --> N8n
+@enduml

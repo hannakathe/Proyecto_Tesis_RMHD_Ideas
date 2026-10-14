@@ -1,0 +1,34 @@
+@startuml estados_orden_produccion
+title Diagrama de estados — Orden de Producción (RF-01, RF-04, RF-06)
+skinparam state {
+  BackgroundColor #F2E6D8
+  BorderColor #6B3F1D
+  ArrowColor #6B3F1D
+}
+
+[*] --> EnCola : confirmación de pedido (RF-01)
+
+EnCola --> EnProceso : artesana inicia fabricación (RF-04)
+EnCola --> EnCola : reordenar prioridad (RF-08)
+
+EnProceso --> EnAcabados : avance manual (RF-04)
+EnProceso --> EnProceso : registrar consumo\nde materiales (RF-07)
+
+EnAcabados --> Terminado : artesana marca\nterminado (RF-04)
+
+Terminado --> Entregado : confirmación de envío/entrega
+
+Entregado --> [*]
+
+EnCola : entry / notificar cliente "pedido confirmado" (RF-05)
+EnProceso : entry / notificar cliente "en producción" (RF-05)
+EnAcabados : entry / notificar cliente "en acabados" (RF-05)
+Terminado : entry / notificar cliente "listo para envío" (RF-05)
+Entregado : entry / calcular tiempo real de producción (RF-11)
+
+note right of EnCola
+  Si la fecha estimada se vence
+  o faltan < 2 días, el panel la
+  resalta en rojo (RF-06).
+end note
+@enduml

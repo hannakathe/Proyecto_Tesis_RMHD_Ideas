@@ -1,0 +1,40 @@
+@startuml secuencia_proceso_pedido
+title Diagrama de secuencia — Proceso "Realizar pedido y generar orden de producción" (RF-14, RF-16, RF-27, RF-01, RF-05)
+skinparam sequence {
+  ActorBorderColor #6B3F1D
+  LifeLineBorderColor #6B3F1D
+  ParticipantBorderColor #6B3F1D
+  ParticipantBackgroundColor #F2E6D8
+  ArrowColor #6B3F1D
+}
+
+actor Cliente
+participant "Frontend\n(Next.js)" as FE
+participant "API Pedidos\n(FastAPI)" as API
+participant "Pasarela de pago\n(Wompi/PSE)" as Pasarela
+participant "API Producción" as Produccion
+participant "Base de datos" as BD
+participant "n8n" as N8n
+
+Cliente -> FE : seleccionar productos y confirmar pedido
+FE -> API : POST /pedidos (carrito, tipo_pedido)
+API -> BD : INSERT pedido, detalle_pedido
+API -> Pasarela : iniciar transacción(monto)
+Pasarela --> API : referencia_transaccion
+
+alt pago aprobado
+  Pasarela -> API : webhook confirmacion(pago = aprobado)
+  API -> BD : UPDATE pedido.estado_pago = 'pagado'
+  API -> Produccion : crear orden_produccion(detalle_pedido)
+  Produccion -> BD : INSERT orden_produccion (estado='en_cola')
+  Produccion -> N8n : disparar evento "pedido_confirmado"
+  N8n -> Cliente : notificación (correo/WhatsApp)
+  API --> FE : 200 OK (pedido confirmado)
+  FE --> Cliente : mostrar confirmación y fecha estimada
+else pago rechazado
+  Pasarela -> API : webhook confirmacion(pago = rechazado)
+  API -> BD : UPDATE pedido.estado_pago = 'cancelado'
+  API --> FE : 402 Pago rechazado
+  FE --> Cliente : mostrar error de pago
+end
+@enduml

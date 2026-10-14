@@ -1,0 +1,18 @@
+@startuml estados_notificacion
+title Diagrama de estados — Notificación enviada (RF-05, RF-09, RF-20, RNF-13)
+skinparam state {
+  BackgroundColor #F2E6D8
+  BorderColor #6B3F1D
+  ArrowColor #6B3F1D
+}
+
+[*] --> Pendiente : evento dispara notificación\n(cambio de estado, alerta, pedido)
+
+Pendiente --> Enviada : n8n confirma envío\nexitoso (RF-20)
+Pendiente --> Fallida : error de canal\n(WhatsApp/correo)
+
+Fallida --> Pendiente : reintento automático\n(política de reintentos n8n)
+
+Enviada --> [*]
+Fallida --> [*] : reintentos agotados,\nse registra incidencia
+@enduml
